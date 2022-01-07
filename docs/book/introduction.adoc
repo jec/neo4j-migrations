@@ -1,0 +1,70 @@
+[preface]
+[[preface-introduction]]
+= Preface and introduction
+
+This is a small ebook about maintaining a medium-sized Java project in 2022. The project in question Neo4j-Migrations
+available at https://github.com/michael-simons/neo4j-migrations[github.com/michael-simons/neo4j-migrations].
+Things addressed in here are among others the choice of Java 8 as baseline, the build systems, build-plugins considered to be useful, recommendations about
+structure but also concepts of certain libraries, GraalVM native and how to make things work with each other.
+
+Neo4j-Migrations has been conceived in early 2020 and has developed from  basically one single Spring `InitializingBean`
+with a couple of logic attached to it to a multi-module project with a core API integrated into several ecosystems.
+The domain of that project is not too complex to understand: It's goal is to run one or more migrations or database refactoring
+against a Neo4j graph database instance in a reliable fashion, making sure each refactoring is applied only once. Those
+migrations can come in to flavors: Either as script (a textfile containing Cypher code) or as a class runnable on the JVM.
+
+This will give a couple of interesting things to discuss:
+
+* Which Java version to pick (taking into account it was 2020 when that decision was made)?
+** How to benefit from modern Java nevertheless?
+** How to prepare for or even embrace the Java module system?
+* Which build tool did I chose and why?
+** What are my approaches to make the build as readable as possible?
+** How do I tackle programmatic tasks in the build in contrast to declarative ones
+** How to automate testing?
+** How to automate releasing and where to release?
+* Can Java be good choice for CLI tooling?
+** What is possible with GraalVM native image and what isn't?
+* How to provide uniform access to this library in peoples favorite application frameworks?
+** Revisiting Spring Boot starter
+** Learning about Quarkus Extensions
+
+This publication is of course highly subjective. Actually, like most books, posts and what have you out there: It works for me
+and this project. It doesn't work necessarily for your setup. Some things might even be harmful for your cases, probably
+you find some of them utterly and outright stupid.
+
+== What's the size of the project?
+
+"Sloc Cloc and Code" <<scc>> gives me the following output for version https://github.com/michael-simons/neo4j-migrations/releases/tag/1.3.0[1.3.0], along with some cost estimation based on the COCOMO <<COCOMO>> model:
+
+[source,console]
+----
+scc --exclude-dir docs/book
+───────────────────────────────────────────────────────────────────────────────
+Language                 Files     Lines   Blanks  Comments     Code Complexity
+───────────────────────────────────────────────────────────────────────────────
+Java                       136     12581     1935      3764     6882        273
+XML                         29      3430      151       116     3163          0
+AsciiDoc                     8      1507      329         0     1178          0
+Properties File              7        36        3        13       20          0
+Shell                        5       373       44        63      266         37
+YAML                         5       305       28         0      277          0
+Smarty Template              3        44        7         0       37          2
+Groovy                       2        71        7        32       32          1
+JSON                         2        23        0         0       23          0
+Plain Text                   2       219       33         0      186          0
+Batch                        1       182       35         0      147         30
+Markdown                     1       128       35         0       93          0
+gitignore                    1        33        5         4       24          0
+───────────────────────────────────────────────────────────────────────────────
+Total                      202     18932     2612      3992    12328        343
+───────────────────────────────────────────────────────────────────────────────
+Estimated Cost to Develop (organic) $377,600
+Estimated Schedule Effort (organic) 9.499187 months
+Estimated People Required (organic) 3.531523
+───────────────────────────────────────────────────────────────────────────────
+Processed 644610 bytes, 0.645 megabytes (SI)
+───────────────────────────────────────────────────────────────────────────────
+----
+
+The estimated schedule effort is actually not completely wrong.

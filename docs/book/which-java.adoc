@@ -1,0 +1,95 @@
+[[which-java]]
+= Which Java version to pick in early 2020?
+
+Shiny new things are always neat, but not every target environment supports the latest bits and pieces
+While an application that bring its own runtime, deployed in a container of its own or similar has a lot of freedom
+to just pick the latest and greatest, a library may have not.
+
+== Use the current LTS version or the most widely adopted one?
+
+JDK 11 had been published as LTS-Version in September 2018. 11 incorporates most of the features from 9 and 10, with a couple
+of things I think would have been useful to have in the core API of this project such as:
+
+* actually and without joking, the module system
+* a way nicer `Optional` with methods such as `or`, `flatmap` and `ifPresentOrElse`
+* finally, factory methods for collections
+* effective-final variables as resources in the try-with-resource statement (`var resource = new CypherResource(); try(resource) {}` or
+coming in as a method argument)
+* some nice additions to the stream API (`dropWhile` and `takeWhile`)
+* the reserved type name `var` defined by <<jep286>> in a couple of places
+* the new `not`-predicate method
+* the Flight Recorder from <<jep328>>
+
+As this project is intended as a library and incorporated into other peoples programs I am not that much interested in the
+addition of new garbage collectors. If this had been an application, those additions would have had a much bigger influence.
+
+Neo4j-Migrations is a library, however. I want as many people as possible to be able to use it in their applications if they
+have the need for such a functionality. In 2020 JDK 8 was still the correct choice: It's a given fact that enterprise users
+are slow to migrate their runtime. Of course, it is valid to argue that a nudge might help them to migrate, but the reality
+seems to be different.
+And as a matter of fact, it's not only enterprises. Or at least not only enterprises directly. One of the biggest drivers
+of the Java ecosystem, the Spring Framework, still targets JDK 8. And so do value adding libraries on top of it, like Spring Data,
+JHipster and many more: I wanted Neo4j-Migrations to benefit from that ecosystem without forcing users to bump their JDK
+if they use my library.
+
+So looking at the above list and seeing a couple of things that would have been nice to have in contrast to actual value, the
+decision was made for *JDK 8,* and I am happy with it.
+
+At the time of writing JDK 17, the current LTS, has been out for 4 months already. JDK 17 brings many more things to the table.
+The most prominent features being text blocks, records, sealed classes and pattern matching. Those, together with the fact
+that some runtimes like Helidon <<helidon>> and Quarkus <<quarkus>> already made the jump to 11 since 2020 and
+Spring Framework 6 will even have JDK 17 as baseline and has just dropped the first betafootnote:[https://spring.io/blog/2021/12/16/spring-framework-6-0-m1-released]
+would have probably led to a different decision.
+
+== Caveats and how to address them
+
+The caveats with rooting for JDK 8 come in the form of a couple of "But what if…".
+
+* What if it isn't the worst idea to actually be prepared for <<jep261>>, the Java module system delivered in JDK 9
+and used in JDK 17 via <<jep396>> to encapsulate JDK internals *by default*
+* What if some features are so useful that I still want them? Like at least being able to put up bigger sign than just naming a
+package `internal` to prevent people from using things they should not use because I plan to change them as I see fit?
+* What if I myself want to use a library that already made the jump beyond 8?
+
+Those can be addressed by a couple of things:
+
+=== Don't rely on a derived automatic module name
+
+TIP: What is an automatic Java module name? An automatic module name basically indicates the absence of a module
+descriptor (`module-info.java`). If the JAR file containing the classes in question has the attribute "Automatic-Module-Name"
+in its main manifest then its value is the module name. The module name is otherwise derived from the name of the JAR file.
+
+First and foremost, be a good citizen and define an automatic module name right from the start and don't rely on a name
+derived from your libraries JAR file.
+This prevents that users  of your library that are running on JDK 9+ on the module path have to deal with a derived name
+in their `module-info.java` when referring your library. Why would that be an issue? Because you will break them as soon
+as you want to benefit from modules yourself in which you need to declare a non-automatic name which will most likely be different
+from the one derived from the JAR file. Christian Stein has a couple of suggestions in <<stein-maven-coordinates-and-module-names>>
+I followed loosely when choosing the module names of Neo4j-Migrations and other current projects.
+
+=== Use the latest and greatest JDK
+
+Use the latest and greatest JDK to compile and know about the `--release` flag available for
+javacfootnote:fn-javac-help[https://docs.oracle.com/en/java/javase/17/docs/specs/man/javac.html] since JDK 9. The `--release` flag is different
+from `--source` and `--target`: In contrast to the combination of the latter, `--release` will not only make sure that the
+`--target` matches the `--source` but also that only API is being used that  is available in the targeted release. In other
+words: With `--source` and `--target` alone you would be able to compile Java 8 syntax into Java 8 byte code but still using
+API only available in higher JDKs when not using JDK 8 itself. The release flag prevents this.
+
+=== Learn about Multi-Release Jars
+
+Multi-Release Jars, defined in <<jep238>>, extend the JAR file format to allow multiple,
+Java-release-specific versions of class files to coexist in a single archive. This allows for a couple of things:
+
+* You are not restricted to an automatic module name for your library targeting primarily Java 8. A valid `module-info.java`
+can be part of the Jar for JDK 9+
+* In case you would benefit so much from new API that it is worth the effort of maintaining two versions of class, you can do that
+* One thing I did for JDK 17 was making use of sealed classes so that I can provide more guidance in the API which interfaces
+I introduced only for the API itself and which one and through what hierarchy people are supposed to implement.
+
+The downside to it is IDE support in my experience. I haven't found a good way to work with the source structure of a Multi-Release Jar,
+but I will write more about it in <<building-things>>.
+
+=== What about JDK 9+ dependencies?
+
+This is a problem if you need such dependencies and still want to support JDK 8. The only solution here is not to have them.

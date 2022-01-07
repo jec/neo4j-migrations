@@ -1,0 +1,26 @@
+= Maintaining a medium-sized Java library in 2022 and beyond
+Michael Simons <michael.simons@neo4j.com>
+:toc:
+:toclevels: 3
+:doctype: book
+:lang: en
+:listing-caption: Listing
+:source-highlighter: coderay
+:icons: font
+:sectlink: true
+:sectanchors: true
+:numbered: true
+:xrefstyle: short
+:imagesdir: img
+
+:copyright: Copyright 2022 Michael Simons.
+
+(C) {copyright}
+
+include::introduction.adoc[leveloffset=+1]
+
+include::which-java.adoc[leveloffset=+1]
+
+include::building-things.adoc[leveloffset=+1]
+
+include::resources.adoc[leveloffset=+1]

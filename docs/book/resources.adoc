@@ -1,0 +1,13 @@
+[bibliography]
+= Resources
+
+* [[[COCOMO]]] https://en.wikipedia.org/wiki/COCOMO
+* [[[helidon]]] https://helidon.io
+* [[[jep238]]] https://openjdk.java.net/jeps/238
+* [[[jep261]]] https://openjdk.java.net/jeps/261
+* [[[jep286]]] https://openjdk.java.net/jeps/286
+* [[[jep328]]] https://openjdk.java.net/jeps/328
+* [[[jep396]]] https://openjdk.java.net/jeps/396
+* [[[quarkus]]] https://quarkus.io
+* [[[scc]]] https://github.com/boyter/scc
+* [[[stein-maven-coordinates-and-module-names]]] https://sormuras.github.io/blog/2019-08-04-maven-coordinates-and-java-module-names.html

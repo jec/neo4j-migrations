@@ -1,0 +1,21 @@
+[[building-things]]
+= Building things
+
+In this part the choice of the build tool, plugins for it and externalized programmatic additions will be discussed
+
+== Welcome to Burning Geek Con: The choice of a build tool
+
+We have suggested the https://info.michael-simons.eu/2016/08/17/burning-geek-insult-con/["Insult Con"] back in 2016 already.
+Choosing a build tool is probably worth a whole track alone.
+Let's discuss the options:
+
+* https://maven.apache.org[Maven]
+* https://gradle.org[Gradle]
+* https://bazel.build[Bazel]
+* https://github.com/sormuras/bach[Bach]
+
+We might add ant and a couple of others to it as well, plus every homegrown solution out there. Of course, a homegrown solution
+can be totally fine as well. Neo4j-Migrations can be seen as homegrown, too of course. It solved one issue and evolved later.
+Just because a thing is on GitHub it doesn't mean it's automatically better than what you would write inside your company.
+
+Cliffhanger: Look in the sources or wait until next week for more :)
