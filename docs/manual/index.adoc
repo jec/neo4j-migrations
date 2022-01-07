@@ -13,7 +13,7 @@ Michael Simons <michael.simons@neo4j.com>
 :imagesdir: img
 
 ifndef::manualIncludeDir[]
-:manualIncludeDir: ../
+:manualIncludeDir: ../../
 endif::[]
 
 include::{manualIncludeDir}/README.adoc[tags=properties]

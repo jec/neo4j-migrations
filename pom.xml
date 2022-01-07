@@ -712,7 +712,7 @@
 				<configuration>
 					<backend>html</backend>
 					<doctype>book</doctype>
-					<sourceDirectory>${basedir}/docs</sourceDirectory>
+					<sourceDirectory>${basedir}/docs/manual</sourceDirectory>
 					<sourceDocumentName>index.adoc</sourceDocumentName>
 					<attributes>
 						<icons>font</icons>
