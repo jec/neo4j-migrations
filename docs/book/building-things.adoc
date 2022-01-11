@@ -18,4 +18,216 @@ We might add ant and a couple of others to it as well, plus every homegrown solu
 can be totally fine as well. Neo4j-Migrations can be seen as homegrown, too of course. It solved one issue and evolved later.
 Just because a thing is on GitHub it doesn't mean it's automatically better than what you would write inside your company.
 
-Cliffhanger: Look in the sources or wait until next week for more :)
+To cut it short: I opted for good, old, boring Maven.
+Why? Because I am not only familiar with it, but it's boring in a positive way: If you don't escalate in a pom file, most
+projects look more or less the same and most of the time, they behave the same.
+
+=== Why not Gradle?
+
+I never felt like I need the promoted flexibility it brings.
+I don't need the Groovy (or Kotlin) these days for the mast majority of tasks I have in my builds.
+Also, I did observe several times that using newer versions of Java than the ones that have been latest when a specific version
+of Gradle has been released, causes problems. This is because Gradle depends on <<ASM>>.
+ASM is an all-purpose Java bytecode manipulation and analysis framework. It can be used to modify existing classes or to
+dynamically generate classes, directly in binary form. As such it is tailored to specific Java versions.
+
+While this is not inherently a bad thing, I prefer not having to deal with it, especially as there wasn't anything on the table
+I couldn't get from Maven.
+
+Of course there is the valid argument of incremental builds: Gradle seems to be a lot better in that regard in contrast to Maven.
+Also, there is the https://docs.gradle.com/enterprise/tutorials/caching/[build cache] who has done great things for Spring Boot
+as reported back in 2020footnote:[https://spring.io/blog/2020/06/08/migrating-spring-boot-s-build-to-gradle]:
+
+"The Spring Boot team's primary reason for considering a switch to Gradle was to reduce the time that it takes to build the project. We were becoming frustrated with the length of the feedback loop when making and testing changes."
+-- Andy Wilkinson in "Migrating Spring Boot's Build to Gradle"
+
+In this project here I would benefit much more in shaving more than just seconds from the lengthy restart time of the database
+containers being used to verify migrations against.
+
+=== Why not Bazel?
+
+Bazels focus seems to be a lot on incremental build, local or distributed caching. While it was intriguing to try out something
+completely new, it would have added a step learning curve for me and I was more focussed on solving a business usecase.
+
+=== Why not Bach?
+
+https://github.com/sormuras/bach[Bach] is an interesting contender in that regard that it uses Java and Java Modules to build
+Java Modules.
+I did work a bit with the author, Christian Stein, on it, and we migrated one other pet project of mine to use it.
+I like the "Java only" approach a lot, and I think it has potential. However, it is Java Modules only. While I am gonna speak about
+modules in this publication, Neo4j-Migrations is not only Java modules.
+
+In addition, Bach is a lot of work in progress. Of course, this is not bad and someone has to solve the egg-and-hen-problem here,
+but I am just not up for that call.
+
+=== Maven it is
+
+Before I jump into how I configure my projects these days with Maven, just a quick recap:
+The word Maven is a Yiddish word for "expert", derived from the Hebrew word mayvin (מבין), which means "who understands."
+A maven is an expert who understands the skill or subject at hand:
+
+Maven approaches a couple of things with "convention over configuration": It tries to tackle dependency management, the build process
+and the deployment. It all evolves around a standard cycle of validate, compile, test, packaging, integration testing, installation and deploymenet.
+
+One of the biggest critics here is having the "Project Object Model descriptor" - POM for short - materialized as `pom.xml`
+doing both dependency management, build description and eventual being a representation of a deployed artifact.
+
+I have decided that I can happily live with that.
+
+== My Maven best practices
+
+=== Use properties and dependency management for versions
+
+Even in single-module project (Neo4j-Migrations is a multi-module project), I put every version of every dependency and every plugin I use
+into a property in the `<properties />` element.
+For dependencies, I use the `<dependencyManagement />` element.
+The later might seem like overkill in a single module, but it will be a life saver when you encounter non-converging dependencies:
+Those are dependencies that are transitive dependencies of your direct dependencies with mismatching versions: Usually, Maven would
+resolve the higher version, but this is maybe not always what you want.
+
+Instead of excluding the transitive dependency from one direct dependency, you should use dependency management to exactly
+specify which version you want (and from which you hope that is compatible with both direct dependencies).
+
+The list of properties containing the versions helps me to keep an overview of what I have.
+The dependency management allows me in submodules to omit the version altogether.
+Have a look at my pom.xml, in the properties sectionfootnote:[https://github.com/michael-simons/neo4j-migrations/blob/662018028e1ffc89bf4558eed23a463fe11e2ccf/pom.xml#L66] and the
+dependency managementfootnote:[https://github.com/michael-simons/neo4j-migrations/blob/662018028e1ffc89bf4558eed23a463fe11e2ccf/pom.xml#L135].
+
+TIP: If you don't want to read all the following, you might consider having a look at the OSS Quickstart archetype <<oss-quickstart>>
+from https://twitter.com/gunnarmorling[Gunnar Morling].
+
+=== Make use of the enforcer plugin
+
+The self-titled "The Loving Iron Fist of Maven™", the <<maven-enforcer-plugin>>. It helps you to keep things straight.
+I used it to
+
+* enforce the Java version required to build this project
+* the Maven version being used
+* that all dependencies converge
+
+See my configuration in <<enforcer-plugin-config>>.
+
+[[enforcer-plugin-config]]
+.My enforcer config
+[source,xml,indent=0,tabsize=4]
+----
+include::../../pom.xml[tag=enforcer-plugin-config]
+----
+
+It is so good, it brings tears to peoples facesfootnote:[https://twitter.com/aalmiray/status/1478036541238923267].
+
+=== More conventions
+
+What is better than conventions? Well, more conventionsfootnote:[https://maven.apache.org/developers/conventions/code.html].
+The first one who brought the order of elements in a POM-file to attention was longtime Java User Group contributor and friend https://twitter.com/FrVaBe[Franz van Betteraey].
+The second one came from the Spring Boot team. I remember in one PR we discussed the order of dependencies.
+
+All of that got me thinking: I don't want to think too much, and just get it done. Ever since then, I add the "Sortpom Maven Plugin" <<sortpom>> to new
+projects like that:
+
+[[sortpom-config]]
+.Apply automatic sorting to pom files
+[source,xml,indent=0,tabsize=4]
+----
+include::../../pom.xml[tag=sortpom-config]
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>sort</goal>
+                            </goals>
+                            <phase>verify</phase>
+                        </execution>
+                    </executions>
+                </plugin>
+----
+
+Either it automatically sorts the poms in the `verify` phase or call if indepent: `./mvnw sortpom:verify@sort`.
+It orders the elements of my pom in a stable, consistent order and also the dependencies, grouped by scope.
+
+=== Escalate away from conventions
+
+The moment I would have to jump through so many loops to get a thing done via Maven configuration, I escalate in two steps.
+Both are done via the Exec-Maven-Plugin <<exec-maven-plugin>>. The plugin is able to execute Java in the same JVM or alternatively,
+external processes, either other programms or Java based calls. The latter can be configured to use the same class path
+like the build.
+
+So here are my 3 approaches to go from conventions to a programmatic approach: The farer away it get's from Maven and convention,
+the more issues might arise on "other peoples" machines:
+
+==== Execute a Java program with your current classpath
+
+Maybe everything you need for a task is already inside your project. First step of escalating.
+For the CLI module I use <<picocli>> and I added the `AutoComplete.GenerateCompletion` subcommand in `MigrationsCli` footnote:[https://github.com/michael-simons/neo4j-migrations/blob/662018028e1ffc89bf4558eed23a463fe11e2ccf/neo4j-migrations-cli/src/main/java/ac/simons/neo4j/migrations/cli/MigrationsCli.java#L62].
+Thus, my CLI learned how to generate a shell completion script. There's a lot about that topic in the "Autocomplete for Java Command Line Applications"footnote:[https://picocli.info/autocomplete.html]
+manual. I want to distribute the script as a resource, too. I don't want to manually add it as a resource. Therefore, my build
+should call the classes being build.
+This is an excellent use case to for <<exec-maven-plugin>> calling Java with the current classpath as shown in <<exec-maven-plugin-java-example>>:
+
+[[exec-maven-plugin-java-example]]
+.Using Maven exec plugin to call single program (neo4j-migrations-cli/pom.xml)
+[source,xml,indent=0,tabsize=4]
+----
+include::../../neo4j-migrations-cli/pom.xml[tag=exec-maven-plugin-java-example]
+----
+
+. Note that we can use the `<classpath />` element here that passes the whole classpath to the `java` executable
+. Of course there is a property in the `pom.xml` holding the name of my main class, which is used in several places
+. The rest are a couple of args to the actual class being called
+
+==== Call a single program
+
+This is the next step of escalation. If I am just dealing with a single thing I need todo outside Maven or a plugin, I check
+if it is a single call, simple to parameterize.
+Compressing my GraalVM native binaries with UPX is such a thing as shown in <<exec-maven-plugin-directly-example>>:
+
+[[exec-maven-plugin-directly-example]]
+.Using Maven exec plugin to call s single program (neo4j-migrations-cli/pom.xml)
+[source,xml,indent=0,tabsize=4]
+----
+include::../../neo4j-migrations-cli/pom.xml[tag=exec-maven-plugin-directly-example]
+----
+
+==== Scripting things
+
+If there is neither a class in my project solving my needs nor a single executable, I resort to scripting.
+A <<bash>> script seems reasonable these days, as bash or something compatible should be available in most places.
+If you want to stick to what you most like have in your project, use a Java script with <<JBang>>.
+
+I use <<japicmd>> to compare previous and current versions of the project checking for semantic version or rather for changes
+that would break semantic versioning. For this I need the current version number (given of course via the `<version>` tag)
+and the previous version (given via a property named `neo4j-migrations.previous.version`).
+
+The previous version number needs to be updated when a release has been prepared, just before the release plugin will commit
+and tag the changes. I added a corresponding exec-maven configuration in the parent `pom.xml`
+
+[[exec-maven-plugin-script-example]]
+.Using Maven exec plugin to call a script (pom.xml)
+[source,xml,indent=0,tabsize=4]
+----
+include::../../pom.xml[tag=exec-maven-plugin-script-example]
+----
+
+You notice the execution has an identifier. It is referred in the release-plugin section:
+
+.Calling a release completion goal (pom.xml)
+[source,xml,indent=0,tabsize=4]
+----
+include::../../pom.xml[tag=maven-release-plugin-config]
+----
+
+The script is rather simple (you'll find it in the https://github.com/michael-simons/neo4j-migrations/tree/1.3.1/bin[bin] folder):
+
+.Extracting a prepared version from Maven release files and updating a property (update-previous-version.sh)
+[source,bash]
+----
+include::../../bin/update-previous-version.sh[]
+----
+
+While a Maven maven would maybe have solved this with pure XML declaration, I couldn't and would go as so far.
+This is easier to read.
+
+These days, you are not restricted to shell-scripts. You can just stick to Java if you want.
+Have a look at my https://github.com/michael-simons/neo4j-migrations/blob/1.3.1/bin/test_native_cli.java[test_native_cli.java] script  in the same folder.
+It is a Java program, orchestrating a <<Testcontainer>> and testing the native build.
+Right now, it is called from a GitHub action, but it would be easy enough to call it from Maven.
+All the power of Java right at your hands, as a script via <<JBang>>.

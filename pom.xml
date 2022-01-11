@@ -407,6 +407,7 @@
 					<artifactId>maven-surefire-plugin</artifactId>
 					<version>${maven-surefire-plugin.version}</version>
 				</plugin>
+				<!-- tag::sortpom-config[] -->
 				<plugin>
 					<groupId>com.github.ekryd.sortpom</groupId>
 					<artifactId>sortpom-maven-plugin</artifactId>
@@ -420,6 +421,7 @@
 						<createBackupFile>false</createBackupFile>
 						<expandEmptyElements>false</expandEmptyElements>
 					</configuration>
+					<!-- end::sortpom-config[] -->
 				</plugin>
 				<plugin>
 					<groupId>org.jacoco</groupId>
@@ -485,6 +487,7 @@
 						</execution>
 					</executions>
 				</plugin>
+				<!-- tag::exec-maven-plugin-script-example[] -->
 				<plugin>
 					<groupId>org.codehaus.mojo</groupId>
 					<artifactId>exec-maven-plugin</artifactId>
@@ -493,6 +496,7 @@
 						<skip>true</skip>
 					</configuration>
 					<executions>
+						<!-- end::exec-maven-plugin-script-example[] -->
 						<execution>
 							<id>prepare-release</id>
 							<goals>
@@ -507,6 +511,7 @@
 								<skip>true</skip>
 							</configuration>
 						</execution>
+						<!-- tag::exec-maven-plugin-script-example[] -->
 						<execution>
 							<id>release-prepared</id>
 							<goals>
@@ -519,6 +524,7 @@
 						</execution>
 					</executions>
 				</plugin>
+				<!-- end::exec-maven-plugin-script-example[] -->
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-site-plugin</artifactId>
@@ -573,6 +579,7 @@
 					</execution>
 				</executions>
 			</plugin>
+			<!-- tag::enforcer-plugin-config[] -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-enforcer-plugin</artifactId>
@@ -598,6 +605,7 @@
 					</execution>
 				</executions>
 			</plugin>
+			<!-- end::enforcer-plugin-config[] -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
@@ -687,6 +695,7 @@
 					</execution>
 				</executions>
 			</plugin>
+			<!-- tag::maven-release-plugin-config[] -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-release-plugin</artifactId>
@@ -704,6 +713,7 @@
 					<completionGoals>compile exec:exec@release-prepared</completionGoals>
 				</configuration>
 			</plugin>
+			<!-- end::maven-release-plugin-config[] -->
 			<plugin>
 				<groupId>org.asciidoctor</groupId>
 				<artifactId>asciidoctor-maven-plugin</artifactId>
