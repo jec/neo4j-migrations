@@ -47,7 +47,7 @@ containers being used to verify migrations against.
 === Why not Bazel?
 
 Bazels focus seems to be a lot on incremental build, local or distributed caching. While it was intriguing to try out something
-completely new, it would have added a step learning curve for me and I was more focussed on solving a business usecase.
+completely new, it would have added a steep learning curve for me and I was more focussed on solving a business usecase.
 
 === Why not Bach?
 
@@ -74,6 +74,10 @@ doing both dependency management, build description and eventual being a represe
 
 I have decided that I can happily live with that.
 
+TIP: Read the results from the Maven Dependencies Pop Quizfootnote:[https://andresalmiray.com/maven-dependencies-pop-quiz-results/] by
+     https://twitter.com/aalmiray/[Andres Almiray]. Especially before you post stuff like this thing here to the internet.
+     When in doubt, Andres is right.
+
 == My Maven best practices
 
 === Use properties and dependency management for versions
@@ -81,9 +85,13 @@ I have decided that I can happily live with that.
 Even in single-module project (Neo4j-Migrations is a multi-module project), I put every version of every dependency and every plugin I use
 into a property in the `<properties />` element.
 For dependencies, I use the `<dependencyManagement />` element.
-The later might seem like overkill in a single module, but it will be a life saver when you encounter non-converging dependencies:
-Those are dependencies that are transitive dependencies of your direct dependencies with mismatching versions: Usually, Maven would
-resolve the higher version, but this is maybe not always what you want.
+The later might seem like overkill in a single module, but it will be a lifesaver when you encounter non-converging dependencies:
+Those are dependencies that are transitive dependencies of your direct dependencies with mismatching versions: Your direct dependency
+A depends on X:1, your direct dependency B on X:2.
+
+When you declare a dependency on A before B, Maven will resolve X:1. When B is declared before A, it will resolve X:2. WHy?
+Maven does build a graph of dependencies. For transitive dependencies, it will pick out the nearest dependency. That is, the
+one that has the fewest number of hops from the direct dependency. This severely threatens the stability of your build.
 
 Instead of excluding the transitive dependency from one direct dependency, you should use dependency management to exactly
 specify which version you want (and from which you hope that is compatible with both direct dependencies).
@@ -141,8 +149,12 @@ include::../../pom.xml[tag=sortpom-config]
                 </plugin>
 ----
 
-Either it automatically sorts the poms in the `verify` phase or call if indepent: `./mvnw sortpom:verify@sort`.
+Either it automatically sorts the poms in the `verify` phase or call if independent: `./mvnw sortpom:verify@sort`.
 It orders the elements of my pom in a stable, consistent order and also the dependencies, grouped by scope.
+Remember what has been written about resolving transitive versions? When you just add a dependency on top of the dependency list,
+it might have the same dependency as another direct dependency has below. Now suddenly the new transitive dependency will be
+picked up. Sorting does not completely solve this problem, especially not without dependency management, but in many cases
+results might be less surprising.
 
 === Escalate away from conventions
 
