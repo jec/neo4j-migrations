@@ -65,6 +65,10 @@
 
 	<properties>
 		<aggregate.report.dir>neo4j-migrations-test-results/target/site/jacoco-aggregate/jacoco.xml</aggregate.report.dir>
+
+		<maven.compiler.source />
+		<maven.compiler.target />
+
 		<apiguardian.version>1.1.1</apiguardian.version>
 		<appassembler-maven-plugin.version>2.1.0</appassembler-maven-plugin.version>
 		<artifactsDir>neo4j-migrations-cli/target</artifactsDir>
