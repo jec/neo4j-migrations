@@ -23,4 +23,8 @@ include::which-java.adoc[leveloffset=+1]
 
 include::building-things.adoc[leveloffset=+1]
 
+include::frameworks.adoc[leveloffset=+1]
+
+include::releasing-things.adoc[leveloffset=+1]
+
 include::resources.adoc[leveloffset=+1]

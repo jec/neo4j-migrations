@@ -1,0 +1,210 @@
+[[Frameworks]]
+= Frameworks
+
+This part will speak about the "big" frameworks and what possibilities they offer and how you can hook up your library into them.
+This is not about "low level" frameworks, such as a class scanning library, a command line tooling, but more outwards or up the stack.
+
+I am talking about Spring Framework, Spring Boot, Quarkus, Helidon, Micronaut or similar. I will cover Spring Boot and Quarkus here
+as those are the ones Neo4j-Migrations offers direct support for.
+
+== General considerations
+
+All the big frameworks come with a lot of dependencies already. If your library is written in such a way that it uses a ton
+of dependencies as well, you or your users end up in dependency issues pretty quickly. I honestly do think that the JDK offers
+so many great APIs, being it for all the datastructures you need, sorting algorithms, String and general I/O operations and even
+upto HTTP clients (just checkout out `java.net.http.HttpClient` for that matter), that there is often any good reason to
+add a heavyweight dependency to your project at all.
+
+Things I have in mind here are `commons-lang`, `guava` and the like: First, look at what the JDK offers for a task at hand
+or what is needed to create something decent yourself before you get yourself a couple of megabytes of dependencies.
+
+On the other hand, specialized needs such as connecting to a database with a JDBC implementation or a specialized driver such
+as in Neo4js case with the Bolt driver can't be solved within a reasonable amount of work. The same applies to <<ClassGraph>>
+for example. ClassGraph is a library I use for scanning the class path for resources and for classes implementing a given interface.
+I theoretically could do this all by myself but hardly as good (or as complete) as dedicated library.
+
+However, you should never expose the API of such a library directly on your API. Why? Because if you do, you will be inevitably
+glued to the evolution of a third party tool and that is probably not what you want if you like to follow semantic versioning or
+things like that. Another reason: Sometimes such an API might not work in a target environment like one of the frameworks to follow,
+and you might want to plug-in their solution for the same problem.
+
+[discrete]
+=== It's a kind of magic!
+
+The above headline is not only the name of a great Queen song from 1986 accompanying the movie _Highlander_ in which the same statement
+is used to "explain" the immortals fighting for "the price", but it can also be used as a question. "Is this a kind of magic?":
+
+[quote, Maciej Walkowiak, https://twitter.com/maciejwalkowiak/status/1495528915535814660]
+____
+Is
+@springboot
+still considered as *magic* by anyone or has it already become a default and understood level of abstraction?
+____
+
+The discussion following was good and interesting. I have that approach in a talk for a while now. As a user of a car or
+even of a computer itself: I don't need to know how the single parts work or work together. To be honest, while I do know
+the basic principle of how a combustion engine or an electric engine works, I couldn't care less most of the time. There
+are better trained specialists out there who can help me.
+
+It gets more complicated when looking at computer: As a software engineer I better know the basic concepts of I/O, processor,
+slow and fast memory and what have you. Should I be able to pick a computer apart and reassemble it? Does it make me a worse
+software engineer when I never built my own PC? Should I even be aware how the electronics works? Questionable.
+
+Things a are a bit different for a developer when looking at software: While some bootcamps are probably trying to cookie-cut
+as many developers as possible and telling people that at least some computer science knowledge is overrated and frameworks
+do all the heavy lifting, this is just not true. You should have a general ideas about complexity, memory usage, runtime behaviour
+of algorithms and the like. And you can't get around that you need to know in the end how a target framework of choice behaves.
+
+I firmly believe understanding the mechanics of something like Spring Boot, Micronaut, Quarkus or even Helidon SE (which as a much more
+visible and explicit "functional" approach) is paramount, for both a developer using such tech for creating applications and
+business value as well as for developers wanting to contribute their thing to a framework.
+
+So here we are, let's break the magician's code once again:
+
+== Spring Boot
+
+A lot has been said already about "the magic" about Spring Boot. Actually, I am one of the people who did start talking about it early on, see
+<<a-kind-of-magic-2016>>.
+As this is known now by a lot of people and the concept of Spring Boot starter and their autoconfiguration is along now for more than 6 years
+actually, I am going to refer to one of my talks from 2016 until the time being: "It's a kind of magic? - Custom Spring Boot Starter"footnote:[https://speakerdeck.com/michaelsimons/its-a-kind-of-magic-custom-spring-boot-starter]
+
+== Quarkus
+
+Quarkus is a framework primarily developed by Red Hat. It is a Java framework tailored for deployment on Kubernetes.
+Key technology components surrounding it are OpenJDK HotSpot and GraalVM. The goal of Quarkus is to make Java a leading
+platform in Kubernetes and serverless environments while offering developers a unified reactive and imperative programming
+model to optimally address a wider range of distributed application architectures. Its first version was published in March 2019.
+
+It has a couple of design principles such as
+
+* Container first
+* Developer productivity
+
+Wikipedia lists unifying imperative and reactive as well, but for the purpose of this chapter, the two above will do. Container first
+with an emphasis on low memory usage and fast startup times go hand in hand with developer productivity:
+
+image::https://imgs.xkcd.com/comics/compiling.png["Obligatory XKCD (303)",link="https://xkcd.com/303/"]
+
+While I get back to speed of compiling, startup or restart in a moment, other things important for Quarkus are
+
+* unified configuration (Spring Boot has this of course too, and I personally like Springs configuration support better
+  than SmallRye's one (SmallRye config is library use by Quarkus))
+* "Batteries included" approach: Quarkus uses <<Testcontainer>> for bringing up any downstream service dependencies such as
+  databases, message brokers and the like. In case there is explicit configuration for such a service, the so called "Dev services"
+  will kick in and bring up a Neo4j database for you for example
+* Live coding: Quarkus undertakes some effort to determine whether classes or resources have changed when a request reaches
+  an application started in development mode. If so, that class is transparently recompiled and all parts of the application
+  affected will restart (that works actually much better than Spring Boots restart class loader)
+
+The fast startup times, the unified configuration and the dev services are all relevant when you want to provide a Quarkus
+extension for your library or service. These three points are a good chunk of why the Quarkus extension are designed the way they are.
+
+=== Creating a closed world at build time
+
+The main "trick" inside Quarkus' sleeves is doing as much work and processing during build time to create a closed world.
+Closed world meaning that "everything" (i.e. configuration, CDI beans, resources, entities and such) is known before the
+startup of an application. That closed world is actually written to bytecode in many cases. Vice versa, stuff outside that
+assumption for which can be guaranteed that there's no execution path touching it, will not be loaded into a JVM.
+
+All that goes together with avoiding reflection as much as possible. That would start by finding entities, JAX-RS resources,
+over to (re)configuring things during runtime and wiring up collaborators (aka autowiring or injecting things) and many more
+stuff we as developers using any framework with dependency injection take for granted.
+
+If the assumption of a closed world sounds familiar: You might have heard in the context of the <<GraalVM>>. More specifically
+together with its native image compilation: Turning a proper JVM program into a native machine binary. GraalVM itself removes any
+unreachable code found within the application as well as any of its dependencies for the image to be as small as possible.
+A native executable starts usually much faster and uses far less memory than a traditional JVM.
+
+NOTE: There are a couple of different approaches to that topic. <<Micronaut>> for examples goes "all in" in terms of annotation processing.
+      Or - in the words of their architect Graeme Rocher - "Micronaut is an implementation of an annotation-based programming model."footnote:[https://docs.micronaut.io/latest/guide/index.html#architecture]
+      More specifically most if not all the annotations used in Micronaut applications are processed at compile time, not
+      at runtime as other frameworks do. "The AnnotationMetadata API is a construct that is used both a compilation time and at runtime by
+      framework components. AnnotationMetadata represents the computed fusion of annotation information for a particular type,
+      field, constructor, method or bean property and may include both annotations declared in the source code, but also
+      synthetic meta-annotations that can be used at runtime to implement framework logic."
+      +
+      I am pretty sure that Spring Framework 6 and the efforts undertaken at VMWare will move into a similar direction.
+      I have written a small annotation processorfootnote:[https://github.com/neo4j-contrib/cypher-dsl/tree/main/neo4j-cypher-dsl-codegen/neo4j-cypher-dsl-codegen-sdn6]
+      for Neo4js <<Cypher-DSL>> and the general Java Api for that is well-designed.
+
+==== Build steps
+
+Much of the following is taking straight from "Writing your own extension"footnote:[https://quarkus.io/guides/writing-extensions#bootstrap-three-phases],
+a page probably not many casual users of Quarkus will ever open. It does however contain a lot of valuable resources. Most important
+to understand the behaviour of your extension and an application eventually using it are the following three distinct phases of bootstrapping
+a Quarkus app:
+
+Augmentation:: This initial phase is done via _Build Step Processors_, having access to an index containing annotations found
+and ways of access to further descriptors, properties and _build items_ created by previous processors. The outcome of those
+build steps can have many forms: It ranges from additional resources put into the applications, hints which classes
+to include in a GraalVM native image or (CDI) items available in your final application. Either way, the outcome is recorded into
+actual bytecode. Furthermore, all build step processors can interact with _Recorders_. Those records are a way of blue printing
+what should be eventually executed, so that it can be recorded into bytecode.
++
+Bytecode recorded goes into _one_ of the following phases:
+
+Static init:: The framework is going to create a static method to be called from a main class that is going to initialize as
+much of the application as possible.
++
+The outcome of the static init phase can be recorded as is during augmentation / build time: Any library needed to produce it
+can be dropped from the final class path so that it will never be loaded into the JVM running the application.
++
+The static init is even more important for GraalVM native image: The static init is executed on a JVM during ahead-of-time
+compilation and any objects retained there are directly serialized into the native executable. This means that if a framework
+can boot in this phase then it will have its booted state directly written to the image. Of course this will be then executed
+but the computation has already be done at this point.
+
+Runtime init:: Steps recorded here are executed from an applications main method respectively during native executable boot.
+There are no restrictions what can be done here. Ports and such can be opened.
+
+It is hopefully apparent that as much as possible should be pushed into static init to achieve the quickest startup possible.
+
+=== Project setup for an extension
+
+Quarkus extensions are usually setup as multi-module projects containing the following modules:
+
+[source,console]
+----
+neo4j-migrations-quarkus-parent
+├── deployment
+│   └── src
+├── integration-tests
+│   └── src
+└── runtime
+    └── src
+----
+
+The parent project is usually responsible for dependency, plugin and build management, while the deployment module contains
+all the necessary augmentation code and the runtime module the actual behaviour to be recorded. Integration tests are well,
+integration tests.
+
+WARNING: Those are not your usual integration test! To test your extension the best way possible you will have eventually to
+         create a real application like module and subject to augmentation. Just like a user would when using your extension.
+         I found this to be one of the hardest thing to understand and learn.
+
+The flow of dependencies is crucial to understand: A deployment module actually _must_ depend on the runtime module as
+the runtime module will contain the actual recorders and their dependencies. The reason: The recorded bytecode can of course
+only be executed when it has access to the runtime classes. A runtime module on the other hand _must not_ dependent on the
+deployment module as that would pull in all Quarkus augmentation and deployment code into the runtime, quite the contrary of
+what should be achieved.
+
+On the other hand, deployment modules are of course allowed to depend on other deployment modules so that module `B` can consume
+any build items from `A` and use them. The same applies for runtime modules: They are free to depend on other runtime modules.
+
+[TIP]
+====
+The Quarkus people use Maven a lot. The make use of artifacts and extensions in a couple of places. Basically, using de-jure
+or de-facto standards for getting you up to speed and running. You can use
+
+```
+mvn io.quarkus:quarkus-maven-plugin:create-extension \
+  -DextensionId=my-ext \
+  -Dname="My extension"
+```
+
+to create a new extension. The process will ask you for a group id and depending on that, you will end up with a "standalone"
+layout, the "Quarkiverse"footnote:[https://github.com/quarkiverse] layout (in case your group id starts with `io.quarkiverse.`)
+or from within the Quarkus source tree itself, the "Quarkus core" layout.
+====
+
+=== The effect on Neo4j-Migrations

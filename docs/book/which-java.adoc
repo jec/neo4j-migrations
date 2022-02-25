@@ -37,8 +37,8 @@ decision was made for *JDK 8,* and I am happy with it.
 
 At the time of writing JDK 17, the current LTS, has been out for 4 months already. JDK 17 brings many more things to the table.
 The most prominent features being text blocks, records, sealed classes and pattern matching. Those, together with the fact
-that some runtimes like Helidon <<helidon>> and Quarkus <<quarkus>> already made the jump to 11 since 2020 and
-Spring Framework 6 will even have JDK 17 as baseline and has just dropped the first betafootnote:[https://spring.io/blog/2021/12/16/spring-framework-6-0-m1-released]
+that some runtimes like <<Helidon>> and <<Quarkus>> already made the jump to 11 since 2020 and
+<<SpringFramework,Spring Framework>> 6 will even have JDK 17 as baseline and has just dropped the first betafootnote:[https://spring.io/blog/2021/12/16/spring-framework-6-0-m1-released]
 would have probably led to a different decision.
 
 == Caveats and how to address them

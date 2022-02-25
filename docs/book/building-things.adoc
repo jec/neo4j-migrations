@@ -84,7 +84,7 @@ TIP: Read the results from the Maven Dependencies Pop Quizfootnote:[https://andr
 ====
 Whatever you take away from this section, please consider *always* having the following properties defined:
 
-First, specificy the projects encoding with
+First, specify the projects encoding with
 
 [source,xml]
 ----

@@ -2,10 +2,14 @@
 = Resources
 
 * [[[ASM]]] https://asm.ow2.io
+* [[[a-kind-of-magic-2016]]] https://info.michael-simons.eu/2016/06/01/talking-about-custom-spring-boot-starter-at-spring-io/
 * [[[bash]]] https://www.gnu.org/software/bash/
+* [[[ClassGraph]]] https://github.com/classgraph/classgraph
 * [[[COCOMO]]] https://en.wikipedia.org/wiki/COCOMO
+* [[[Cypher-DSL]]] https://github.com/neo4j-contrib/cypher-dsl
 * [[[exec-maven-plugin]]] https://www.mojohaus.org/exec-maven-plugin
-* [[[helidon]]] https://helidon.io
+* [[[GraalVM]]] https://www.graalvm.org
+* [[[Helidon]]] https://helidon.io
 * [[[JBang]]] https://www.jbang.dev
 * [[[japicmd]]] https://github.com/siom79/japicmp
 * [[[jep238]]] https://openjdk.java.net/jeps/238
@@ -14,10 +18,13 @@
 * [[[jep328]]] https://openjdk.java.net/jeps/328
 * [[[jep396]]] https://openjdk.java.net/jeps/396
 * [[[maven-enforcer-plugin]]] https://maven.apache.org/enforcer/maven-enforcer-plugin/
+* [[[Micronaut]]] https://micronaut.io
 * [[[oss-quickstart]]] https://github.com/moditect/oss-quickstart
 * [[[picocli]]] https://picocli.info
-* [[[quarkus]]] https://quarkus.io
+* [[[Quarkus]]] https://quarkus.io
 * [[[scc]]] https://github.com/boyter/scc
 * [[[sortpom]]] https://github.com/Ekryd/sortpom
+* [[[SpringBoot]]] https://spring.io/projects/spring-boot
+* [[[SpringFramework]]] https://spring.io/projects/spring-framework
 * [[[stein-maven-coordinates-and-module-names]]] https://sormuras.github.io/blog/2019-08-04-maven-coordinates-and-java-module-names.html
 * [[[Testcontainer]]] https://www.testcontainers.org

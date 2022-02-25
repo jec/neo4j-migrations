@@ -1,0 +1,9 @@
+[[releasing-things]]
+= Releasing things
+
+In this chapter, we will discuss such things as semantic versioning, indicating breaking changes early and of course, release tooling.
+
+== Semantic versioning
+
+== Release tooling
+
