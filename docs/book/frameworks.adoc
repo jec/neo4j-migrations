@@ -208,3 +208,36 @@ or from within the Quarkus source tree itself, the "Quarkus core" layout.
 ====
 
 === The effect on Neo4j-Migrations
+
+How does the above restrictions respectively the philosophy affect Neo4j-Migrations and what can I enlist to demonstrate the 
+possibilities of a good deployment module? A couple of things, as it turns out:
+
+First, Neo4j-Migrations depends on another deployment module, namely the Quarkus-Neo4j extension. How to access its primary 
+build item.
+
+Neo4j-Migrations searches for resources (Cypher-Scripts) in both the class path as well as the file system. The latter is less
+than a problem then the former: The file  system is of course always accessible (well, mostly always), regardless if things are
+run on the JVM or native image. The class path is certainly accessible as well, but as we learned before, stuff that is not 
+accessed at build time or explicitly declared to be included in the image just won't be there.
+
+The same rules apply for Java (or Kotlin for that matter) implementations of `JavaBasedMigration` (an interface that allows for
+programmatic migrations). 
+
+While resources and classes will always appear in the Quarkus JVM based output, they won't appear in a GraalVM native image 
+without additional hints (compare <<GraalVMTooling, the tooling available for creating native GraalVM images>>). We are lucky,
+Quarkus offers a couple of hints that will make sure that classes and resources are both read during startup and appear in a 
+native image.
+
+Furthermore, I wanted to make sure that a `Migrations` instance is available as CDI bean, so that a user can access it and 
+call for `info`, `clean` and other operations.
+
+And last but not least, can we add some decent information to the developer console? Let's have a look at each of the above
+points.
+
+==== Depending on another deployment module
+
+==== Discovering and registering resources and classes during deployment
+
+==== Adding synthetic beans
+
+==== Contributing to the developer console

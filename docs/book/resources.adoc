@@ -9,6 +9,7 @@
 * [[[Cypher-DSL]]] https://github.com/neo4j-contrib/cypher-dsl
 * [[[exec-maven-plugin]]] https://www.mojohaus.org/exec-maven-plugin
 * [[[GraalVM]]] https://www.graalvm.org
+* [[[GraalVMTooling]]] https://info.michael-simons.eu/2020/09/15/about-the-tooling-available-to-create-native-graalvm-images/
 * [[[Helidon]]] https://helidon.io
 * [[[JBang]]] https://www.jbang.dev
 * [[[japicmd]]] https://github.com/siom79/japicmp
