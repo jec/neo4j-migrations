@@ -62,6 +62,7 @@ import org.jboss.jandex.IndexView;
  * @author Michael J. Simons
  * @since 1.2.2
  */
+// tag::createFeature[]
 public class MigrationsProcessor {
 
 	static final String FEATURE_NAME = "neo4j-migrations";
@@ -72,6 +73,7 @@ public class MigrationsProcessor {
 
 		return new FeatureBuildItem(FEATURE_NAME);
 	}
+	// end::createFeature[]
 
 	static Set<Class<? extends JavaBasedMigration>> findClassBasedMigrations(Collection<String> packagesToScan, IndexView indexView) {
 
@@ -96,22 +98,34 @@ public class MigrationsProcessor {
 		return classesFoundAndLoaded;
 	}
 
+	// tag::createDiscoverer[]
 	@BuildStep
 	@SuppressWarnings("unused")
-	DiscovererBuildItem createDiscoverer(CombinedIndexBuildItem combinedIndexBuildItem, MigrationsBuildTimeProperties buildTimeProperties) {
+	DiscovererBuildItem createDiscoverer(
+		CombinedIndexBuildItem combinedIndexBuildItem,
+		MigrationsBuildTimeProperties buildTimeProperties
+	) {
 
-		var packagesToScan = buildTimeProperties.packagesToScan.orElseGet(List::of);
-		var classesFoundDuringBuild = findClassBasedMigrations(packagesToScan, combinedIndexBuildItem.getIndex());
-		return new DiscovererBuildItem(StaticJavaBasedMigrationDiscoverer.of(classesFoundDuringBuild));
+		var packagesToScan = buildTimeProperties.packagesToScan
+			.orElseGet(List::of);
+		var index = combinedIndexBuildItem.getIndex();
+		var classesFoundDuringBuild = findClassBasedMigrations(
+			packagesToScan, index); // <.>
+		return new DiscovererBuildItem(StaticJavaBasedMigrationDiscoverer
+			.of(classesFoundDuringBuild));
 	}
+	// end::createDiscoverer[]
 
+	// tag::registerMigrationsForReflections[]
 	@BuildStep
 	@SuppressWarnings("unused")
 	ReflectiveClassBuildItem registerMigrationsForReflections(DiscovererBuildItem discovererBuildItem) {
 
-		return new ReflectiveClassBuildItem(true, true, true,
-			discovererBuildItem.getDiscoverer().getMigrationClasses().toArray(new Class<?>[0]));
+		var classes = discovererBuildItem.getDiscoverer()
+			.getMigrationClasses().toArray(new Class<?>[0]);
+		return new ReflectiveClassBuildItem(true, true, true, classes);
 	}
+	// end::registerMigrationsForReflections[]
 
 	static Set<ResourceWrapper> findResourceBasedMigrations(Collection<String> locationsToScan) throws IOException {
 
@@ -168,19 +182,24 @@ public class MigrationsProcessor {
 		return new ClasspathResourceScannerBuildItem(StaticClasspathResourceScanner.of(resourcesFoundDuringBuild));
 	}
 
+	// tag::addCypherResources[]
 	@BuildStep
 	@SuppressWarnings("unused")
 	NativeImageResourceBuildItem addCypherResources(
+		ClasspathResourceScannerBuildItem classpathResourceScannerBuildItem
+	) {
 
-		ClasspathResourceScannerBuildItem classpathResourceScannerBuildItem) {
-		return new NativeImageResourceBuildItem(
-			classpathResourceScannerBuildItem.getScanner().getResources().stream().map(
-				ResourceWrapper::getPath).collect(
-				Collectors.toList()));
+		var resources = classpathResourceScannerBuildItem.getScanner()
+			.getResources();
+		return new NativeImageResourceBuildItem(resources.stream()
+			.map(ResourceWrapper::getPath)
+			.collect(Collectors.toList()));
 	}
+	// end::addCypherResources[]
 
+	// tag::createMigrations[]
 	@BuildStep
-	@Record(ExecutionTime.RUNTIME_INIT)
+	@Record(ExecutionTime.RUNTIME_INIT) // <.>
 	@SuppressWarnings("unused")
 	MigrationsBuildItem createMigrations(
 		MigrationsBuildTimeProperties buildTimeProperties,
@@ -188,30 +207,50 @@ public class MigrationsProcessor {
 		DiscovererBuildItem discovererBuildItem,
 		ClasspathResourceScannerBuildItem classpathResourceScannerBuildItem,
 		MigrationsRecorder migrationsRecorder,
-		Neo4jDriverBuildItem driverBuildItem,
+		Neo4jDriverBuildItem driverBuildItem, // <.>
 		BuildProducer<SyntheticBeanBuildItem> syntheticBeans
 	) {
+		var configRv = migrationsRecorder
+			.recordConfig(
+				buildTimeProperties, runtimeProperties,
+				discovererBuildItem.getDiscoverer(),
+				classpathResourceScannerBuildItem.getScanner()
+			);
+		var configBean = SyntheticBeanBuildItem
+			.configure(MigrationsConfig.class)
+			.runtimeValue(configRv).setRuntimeInit()
+			.done();
+		syntheticBeans.produce(configBean);
 
-		var configRv = migrationsRecorder.recordConfig(buildTimeProperties, runtimeProperties,
-			discovererBuildItem.getDiscoverer(),
-			classpathResourceScannerBuildItem.getScanner());
-		syntheticBeans.produce(
-			SyntheticBeanBuildItem.configure(MigrationsConfig.class).runtimeValue(configRv).setRuntimeInit().done());
-
-		var migrationsRv = migrationsRecorder.recordMigrations(configRv, driverBuildItem.getValue());
-		syntheticBeans.produce(
-			SyntheticBeanBuildItem.configure(Migrations.class).runtimeValue(migrationsRv).setRuntimeInit().done());
+		var migrationsRv = migrationsRecorder
+			.recordMigrations(configRv, driverBuildItem.getValue()); // <.>
+		var migrationsBean = SyntheticBeanBuildItem
+			.configure(Migrations.class)
+			.runtimeValue(migrationsRv)
+			.setRuntimeInit()
+			.done();
+		syntheticBeans.produce(migrationsBean);
 
 		return new MigrationsBuildItem(migrationsRv);
 	}
+	// end::createMigrations[]
 
+	// tag::applyMigrations[]
 	@BuildStep
 	@Record(ExecutionTime.RUNTIME_INIT)
 	@SuppressWarnings("unused")
-	ServiceStartBuildItem applyMigrations(MigrationsProperties migrationsProperties,
-		MigrationsRecorder migrationsRecorder, MigrationsBuildItem migrationsBuildItem) {
+	ServiceStartBuildItem applyMigrations(
+		MigrationsProperties migrationsProperties,
+		MigrationsRecorder migrationsRecorder,
+		MigrationsBuildItem migrationsBuildItem
+	) {
+
 		migrationsRecorder.applyMigrations(migrationsBuildItem.getValue(),
 			migrationsRecorder.isEnabled(migrationsProperties));
 		return new ServiceStartBuildItem(FEATURE_NAME);
 	}
+	// end::applyMigrations[]
+
+	// tag::createFeature[]
 }
+// end::createFeature[]

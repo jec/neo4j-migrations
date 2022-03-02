@@ -30,18 +30,24 @@ import java.util.Optional;
  * @soundtrack Bad Religion - The Gray Race
  * @since 1.3.0
  */
+// tag::MigrationsBuildTimeProperties[]
 @ConfigRoot(prefix = "org.neo4j", name = "migrations", phase = ConfigPhase.BUILD_AND_RUN_TIME_FIXED)
 public class MigrationsBuildTimeProperties {
 
+	// end::MigrationsBuildTimeProperties[]
 	/**
 	 * List of packages to scan for Java migrations. This is a build time configuration option and can't be changed during runtime.
 	 */
+	// tag::MigrationsBuildTimeProperties[]
 	@ConfigItem
 	public Optional<List<String>> packagesToScan;
 
+	// end::MigrationsBuildTimeProperties[]
 	/**
 	 * Locations of migrations scripts. This is a build time configuration option and can't be changed during runtime.
 	 */
+	// tag::MigrationsBuildTimeProperties[]
 	@ConfigItem(defaultValue = Defaults.LOCATIONS_TO_SCAN_VALUE)
 	public List<String> locationsToScan;
 }
+// end::MigrationsBuildTimeProperties[]

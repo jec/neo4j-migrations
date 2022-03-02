@@ -27,10 +27,12 @@
 			<artifactId>neo4j-migrations</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<!-- tag::quarkus-neo4j-dependency[] -->
 		<dependency>
 			<groupId>io.quarkiverse.neo4j</groupId>
 			<artifactId>quarkus-neo4j</artifactId>
 		</dependency>
+		<!-- end::quarkus-neo4j-dependency[] -->
 		<dependency>
 			<groupId>io.quarkus</groupId>
 			<artifactId>quarkus-vertx-http</artifactId>

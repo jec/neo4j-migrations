@@ -35,8 +35,11 @@ import org.neo4j.driver.exceptions.ServiceUnavailableException;
  * @author Michael J. Simons
  * @since 1.2.2
  */
-@Recorder
+// tag::recordMigrations[]
+@Recorder // <.>
 public class MigrationsRecorder {
+
+	// end::recordMigrations[]
 
 	private static final Logger LOG = Logger.getLogger("ac.simons.neo4j.migrations.quarkus.runtime");
 
@@ -97,11 +100,16 @@ public class MigrationsRecorder {
 	 * @param driver           The runtime value of a driver instance
 	 * @return A runtime value containing the migrations
 	 */
+	// tag::recordMigrations[]
 	public RuntimeValue<Migrations> recordMigrations(
-		RuntimeValue<MigrationsConfig> migrationsConfig, RuntimeValue<Driver> driver
+		RuntimeValue<MigrationsConfig> migrationsConfig,
+		RuntimeValue<Driver> driver
 	) {
-		return new RuntimeValue<>(new Migrations(migrationsConfig.getValue(), driver.getValue()));
+		return new RuntimeValue<>(
+			new Migrations(migrationsConfig.getValue(), driver.getValue()) // <.>
+		);
 	}
+	// end::recordMigrations[]
 
 	/**
 	 * Applies the migrations if {@link MigrationsProperties#enabled} is {@literal true}.
@@ -119,4 +127,6 @@ public class MigrationsRecorder {
 			LOG.error("Cannot apply Neo4j migrations, driver instance cannot reach any database.", e);
 		}
 	}
+	// tag::recordMigrations[]
 }
+// end::recordMigrations[]

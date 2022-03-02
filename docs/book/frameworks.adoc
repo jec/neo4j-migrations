@@ -7,6 +7,7 @@ This is not about "low level" frameworks, such as a class scanning library, a co
 I am talking about Spring Framework, Spring Boot, Quarkus, Helidon, Micronaut or similar. I will cover Spring Boot and Quarkus here
 as those are the ones Neo4j-Migrations offers direct support for.
 
+[[general-considerations]]
 == General considerations
 
 All the big frameworks come with a lot of dependencies already. If your library is written in such a way that it uses a ton
@@ -127,6 +128,7 @@ NOTE: There are a couple of different approaches to that topic. <<Micronaut>> fo
       I have written a small annotation processorfootnote:[https://github.com/neo4j-contrib/cypher-dsl/tree/main/neo4j-cypher-dsl-codegen/neo4j-cypher-dsl-codegen-sdn6]
       for Neo4js <<Cypher-DSL>> and the general Java Api for that is well-designed.
 
+[[build-steps]]
 ==== Build steps
 
 Much of the following is taking straight from "Writing your own extension"footnote:[https://quarkus.io/guides/writing-extensions#bootstrap-three-phases],
@@ -196,11 +198,12 @@ any build items from `A` and use them. The same applies for runtime modules: The
 The Quarkus people use Maven a lot. The make use of artifacts and extensions in a couple of places. Basically, using de-jure
 or de-facto standards for getting you up to speed and running. You can use
 
-```
+[source]
+----
 mvn io.quarkus:quarkus-maven-plugin:create-extension \
   -DextensionId=my-ext \
   -Dname="My extension"
-```
+----
 
 to create a new extension. The process will ask you for a group id and depending on that, you will end up with a "standalone"
 layout, the "Quarkiverse"footnote:[https://github.com/quarkiverse] layout (in case your group id starts with `io.quarkiverse.`)
@@ -234,10 +237,265 @@ call for `info`, `clean` and other operations.
 And last but not least, can we add some decent information to the developer console? Let's have a look at each of the above
 points.
 
+TIP: The relevant Quarkus code of Neo4j-Migrations is in this module and its submodules: https://github.com/michael-simons/neo4j-migrations/tree/1.4.0/neo4j-migrations-quarkus-parent[neo4j-migrations-quarkus-parent],
+     The main processor is of course in the deployment module https://github.com/michael-simons/neo4j-migrations/blob/6b6064c69d7429411e420895bafca8b4ac850fb2/neo4j-migrations-quarkus-parent/deployment/src/main/java/ac/simons/neo4j/migrations/quarkus/deployment/MigrationsProcessor.java#L65[`ac.simons.neo4j.migrations.quarkus.deployment.MigrationsProcessor`]
+     and the main recorder is https://github.com/michael-simons/neo4j-migrations/blob/6b6064c69d7429411e420895bafca8b4ac850fb2/neo4j-migrations-quarkus-parent/runtime/src/main/java/ac/simons/neo4j/migrations/quarkus/runtime/MigrationsRecorder.java#L39[`ac.simons.neo4j.migrations.quarkus.runtime.MigrationsRecorder`.]
+     +
+     *Every* method annotated with `@BuildStep` lives in a processor!
+
+==== Declaring the feature
+
+This is the easiest step of them all:
+
+[[createFeature]]
+[source,java]
+.MigrationsProcessor#createFeature
+----
+include::../../neo4j-migrations-quarkus-parent/deployment/src/main/java/ac/simons/neo4j/migrations/quarkus/deployment/MigrationsProcessor.java[tag=createFeature,indent=0,tabsize=2]
+----
+
+It is a `FeatureBuildItem` which just indicates a name for the feature provided by the extensions.
+
+NOTE: What's with the `@SuppressWarnings("unused")`: That's the downside of "magic" code: The `@BuildStep` gets invoked by
+      the Maven plugins, so a static analyzer like Sonar (and most IDEs) have a hard time figuring out that this method is
+      actually used. I spent enough time on the quadruple A-Rating in https://sonarcloud.io/summary/overall?id=eu.michael-simons.neo4j%3Aneo4j-migrations-parent[sonarcloud]
+      which I don't want to be spoiled with false positive of unused code.
+
 ==== Depending on another deployment module
+
+Neo4j-Migrations needs a connection to the Neo4j database it should be used with. This connection is provided via an instance
+of Neo4js `Driver`. That driver comes from Quarkus Neo4j.
+As the driver instance is of course a runtime dependency - it's a bit hard to create a persistent database connection
+during build time and then serialize it to byte code - we need to depend on the corresponding deployment module from our
+own deployment module of course:
+
+[[quarkus-neo4j-deployment-dependency]]
+[source,xml]
+.pom.xml (in deployment)
+----
+include::../../neo4j-migrations-quarkus-parent/deployment/pom.xml[tag=quarkus-neo4j-deployment-dependency,indent=0,tabsize=2]
+----
+
+And the for full measurement, the runtime dependency in the runtime module:
+
+[[quarkus-neo4j-dependency]]
+[source,xml]
+.pom.xml (in runtime)
+----
+include::../../neo4j-migrations-quarkus-parent/runtime/pom.xml[tag=quarkus-neo4j-dependency,indent=0,tabsize=2]
+----
+
+Now, how to use it? We must step ahead to the build step that puts everything together. It looks like this:
+
+[[createMigrations]]
+[source,java]
+.MigrationsProcessor#createMigrations
+----
+include::../../neo4j-migrations-quarkus-parent/deployment/src/main/java/ac/simons/neo4j/migrations/quarkus/deployment/MigrationsProcessor.java[tag=createMigrations,indent=0,tabsize=2]
+----
+<.> Remember what has been said in <<build-steps>>? This annotation moves the bunch of code
+    eventually into runtime. The main reason here being the fact that we cannot longer postpone the access to a valid
+    physical database connection
+<.> This is a build item produced by a different extension. By declaring it as a method parameter, the build-plugins will
+    inject those items during build time for you
+<.> Here we retrieve the value from the build item. Be aware, it's return type is actually a `RuntimeValue<Driver>`.
+    The name is true to its nature: It is a value only accessible during runtime. It *cannot*  be used
+    here.
+
+The usage of the runtime value of another extension must happen in a recorder in the runtime module.
+<<recordMigrations>> shows the relevant piece of the recorder and actually the smallest one in terms of LoC: All the heavy lifting
+has been done while creating the config:
+
+[[recordMigrations]]
+[source,java]
+.MigrationsRecorder#recordMigrations
+----
+include::../../neo4j-migrations-quarkus-parent/runtime/src/main/java/ac/simons/neo4j/migrations/quarkus/runtime/MigrationsRecorder.java[tag=recordMigrations,indent=0,tabsize=2]
+----
+<.> Marks the class as `@Recorder`. Any processor method annotated with `@Record(ExecutionTime.RUNTIME_INIT)` must declare
+    an argument being a recorder.
+<.> Both parameters passed to `recordMigrations` are runtime values. Only here (and actually, only when the byte code created with this method)
+    is executed, access to the runtime values value is possible.
+
+==== Properties and configuration
+
+To quote the Quarkus manual:
+
+> Some Quarkus configurations only take effect during build time, meaning is not possible to change them at runtime.
+> These configurations are still available at runtime but as read-only […].
+> A change to any of these configurations requires a rebuild of the application itself to reflect changes of such properties.
+
+Which makes perfectly sense in terms of <<build-steps>>: The more things are settled during build, the more things can be
+written in +++<s>stone</s>+++ bytecode.
+
+So there 4 different configuration phases:
+
+* build time: Values are read and available for usage at build time.
+* build and runtime fixed: Values are read and available for usage at build time, and available on a read-only basis at run time.
+* bootstrap: Values are read and available for usage at run time and are re-read on each program execution.
+* run time: Values are read and available for usage at run time and are re-read on each program execution.
+
+Phases that are relevant for Neo4j-Migrations are build and runtime fixed as well as runtime.
+In therms of numbers, most options for Neo4j-Migrations are actually runtime options (compare the list https://michael-simons.github.io/neo4j-migrations/1.4.0/#usage_spring-boot_all-properties[here]),
+such as the schema database or the target database (they might change depending on the URL (which is also runtime)) as well
+as the name of the user who executed the migration and which user to impersonate. It's just fair
+to assume that when an application is connected to a different database, those change.
+
+They go in a properties class annotated with `@ConfigRoot` indicating its phase as `ConfigPhase.RUN_TIME`:
+
+[[MigrationsProperties]]
+[source,java]
+.MigrationsProperties (Excerpt)
+----
+include::../../neo4j-migrations-quarkus-parent/runtime/src/main/java/ac/simons/neo4j/migrations/quarkus/runtime/MigrationsProperties.java[tag=MigrationsProperties,indent=0,tabsize=2]
+----
+<.> A way out of the build time properties later on.
+
+Our build time properties is a lot smaller and the whole class fits in the book:
+
+[[MigrationsBuildTimeProperties]]
+[source,java]
+.MigrationsBuildTimeProperties.java
+----
+include::../../neo4j-migrations-quarkus-parent/runtime/src/main/java/ac/simons/neo4j/migrations/quarkus/runtime/MigrationsBuildTimeProperties.java[tag=MigrationsBuildTimeProperties,indent=0,tabsize=2]
+----
+
+Both these classes live in the runtime module and the only technical difference is the phase. In the <<MigrationsBuildTimeProperties>>
+it is `ConfigPhase.BUILD_AND_RUN_TIME_FIXED`: The source of those properties is consulted during build time, passed to the system,
+evaluated in a sensible way and eventually written to byte code.
+
+And what should be pushed into build time? Discovering of classes and resources! Both of which Neo4j-Migrations
+need to do its refactoring work.
+
+Why the `externalLocations` property during runtime? This is an additional feature that allows to
+configure filesystem only locations for those cases in which they aren't any migrations to discover during build but
+instead are stored completely independent of the application.
+
+How to access these properties? They must be injected into `@BuildSteps`, <<createMigrations>> being one example. It receives
+both build- and runtime properties. <<createDiscoverer>> is one more example coming up:
 
 ==== Discovering and registering resources and classes during deployment
 
+Quarkus uses <<Jandex>> for discovering and indexing classes (of a given type, with certain annotations or listed in configuration files).
+The documentation is a bit sparse around that topic, but Baeldungfootnote:[https://www.baeldung.com/quarkus-bean-discovery-index] has you covered.
+The index can be accessed through the core build items `BeanArchiveIndexBuildItem` and `CombinedIndexBuildItem`.
+The latter allows programmatically adding classes to the index via a computing view on the index:
+When a class is asked for by name, it will be added automatically.
+
+[[createDiscoverer]]
+[source,java]
+.MigrationsProcessor#createDiscoverer
+----
+include::../../neo4j-migrations-quarkus-parent/deployment/src/main/java/ac/simons/neo4j/migrations/quarkus/deployment/MigrationsProcessor.java[tag=createDiscoverer,indent=0,tabsize=2]
+----
+
+Remember what I said in <<general-considerations>> about abstracting away any third-party API you might be using? This is the
+part where it becomes relevant. While I do love <<ClassGraph>>, it is not the perfect candidate for the task at hand: Discovering
+resources and classes in a Quarkus build environment. While it worked in Quarkus 2.6, things broke in 2.7. Together https://twitter.com/lh[@lh]
+I was able to fix this, but I was convinced to try Quarkus way.
+In case you're interested in the abstraction itself: It's called `Discoverer<JavaBasedMigration>` and
+it lives in `neo4j-migrations-core` inside the `neo4j-migrations-core` package. In most scenarios it uses the
+ClassGraph implementation, in Quarkus it is a `StaticJavaBasedMigrationDiscoverer`
+that is preloaded during build time with a fixed set of classes.
+
+I spare you the gory details of `findClassBasedMigrations` and just pick the essential part:
+
+[source,java]
+.Asking the Jandex for all implementors of a given interface:
+----
+var dotName = DotName.createSimple(JavaBasedMigration.class.getName());
+indexView
+    .getAllKnownImplementors(dotName)
+    .forEach(classInfo -> {
+        // Do things with the classInfo found
+        // For example loading it:
+        try {
+            Thread.currentThread().getContextClassLoader()
+                .loadClass(cf.name().toString())
+                .asSubclass(JavaBasedMigration.class);
+        } catch (ClassNotFoundException e) {
+            // Whatever
+        }
+    });
+----
+
+If you need access to class during build time, it must be loaded with the current threads classloader.
+Now what to do with those classes? I first create a `DiscovererBuildItem` in <<createMigrations>>.
+`DiscovererBuildItem` is a custom class, shown in the following listing:
+
+[source,java]
+.DiscovererBuildItem.java
+----
+include::../../neo4j-migrations-quarkus-parent/deployment/src/main/java/ac/simons/neo4j/migrations/quarkus/deployment/DiscovererBuildItem.java[tag=DiscovererBuildItem,indent=0,tabsize=2]
+----
+
+This build item can be passed along as needed. And it is needed indeed: It is not enough to tell Neo4j-Migrations core
+"here are a set of classes", but these classes need to be registered for reflections as they are - most likely - never
+called from application code and therefore removed.
+
+A `ReflectiveClassBuildItem` to the rescue. This is a build in class that is used like this:
+
+[[registerMigrationsForReflections]]
+[source,java]
+.MigrationsProcessor#registerMigrationsForReflections
+----
+include::../../neo4j-migrations-quarkus-parent/deployment/src/main/java/ac/simons/neo4j/migrations/quarkus/deployment/MigrationsProcessor.java[tag=registerMigrationsForReflections,indent=0,tabsize=2]
+----
+
+The boolean parameters corresponds which parts are eligible for reflection (constructor, methods, fields).
+
+Last but not least: Why are resources (like in Cypher-script files) also build time fixed? Because they must be explicitly
+included in the native image when compiled via GraalVM, otherwise they are kept out. The abstraction of discovering is similar
+to searching for classes, you can find it in the processor, too.
+
+They key to have resources in the native image is the `NativeImageResourceBuildItem`:
+
+[[addCypherResources]]
+[source,java]
+.MigrationsProcessor#addCypherResources
+----
+include::../../neo4j-migrations-quarkus-parent/deployment/src/main/java/ac/simons/neo4j/migrations/quarkus/deployment/MigrationsProcessor.java[tag=addCypherResources,indent=0,tabsize=2]
+----
+
+TIP: Quarkus offers some ways to create additional resources during build. These most be added explicitly
+     to native as well, this is not done automatically.
+
 ==== Adding synthetic beans
 
+As a final step, I wanted the user to be able to access the `Migrations` object in their (CDI) code and if enabled,
+execute migrations as soon as the Quarkus application starts.
+
+The former is done via a  `BuildProducer<SyntheticBeanBuildItem>` dependency, seen in <<createMigrations>>.
+Such a producer is a way to return multiple (different) build items from a build step. Here, I add the configuration
+and migrations bean as `SyntheticBeanBuildItem`.
+
+Last but not least, things happening on startup is done via a `ServiceStartBuildItem`.
+What is passed to a startup build item needs to be recorded in the build step producing the item as shown in <<applyMigrations>>:
+
+[[applyMigrations]]
+[source,java]
+.MigrationsProcessor#applyMigrations
+----
+include::../../neo4j-migrations-quarkus-parent/deployment/src/main/java/ac/simons/neo4j/migrations/quarkus/deployment/MigrationsProcessor.java[tag=applyMigrations,indent=0,tabsize=2]
+----
+
 ==== Contributing to the developer console
+
+I tried to cover what's possible in a small video https://michael-simons.github.io/neo4j-migrations/current/#devservicesintegration[here].
+These things are usually done via an additional processor if they have some dynamic nature or just with "plain" https://quarkus.io/guides/qute[Qute template].
+
+In terms of dynamic features (like in our case, accessing the `Migrations` bean and calling methods on it), there's an SPI for
+that allowing to register VertX-HTTP based handlers.
+
+In terms of build time and runtime behaviour they are similar to what has been discussed above, in terms of SPI I did read
+some Quarkus source code.
+
+=== Quintessence
+
+Without deep understanding how a framework - in this case Quarkus *and* the underlying target deployment of GraalVM native - works,
+it is not really possible to integrate an like Neo4j-Migrations in an meaningful way.
+
+But I'd go a step further: Without understanding the implications of deployment augmentation and runtime behaviour: The startup
+time, the quick turnaround, it's nice and shiny, but it's too easy to miss on something when things go wrong.
+
+My recommendation: For a "day 2" scenario, make sure what kind of target environment you have.

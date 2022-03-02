@@ -12,6 +12,7 @@
 * [[[GraalVMTooling]]] https://info.michael-simons.eu/2020/09/15/about-the-tooling-available-to-create-native-graalvm-images/
 * [[[Helidon]]] https://helidon.io
 * [[[JBang]]] https://www.jbang.dev
+* [[[Jandex]]] https://github.com/wildfly/jandex
 * [[[japicmd]]] https://github.com/siom79/japicmp
 * [[[jep238]]] https://openjdk.java.net/jeps/238
 * [[[jep261]]] https://openjdk.java.net/jeps/261

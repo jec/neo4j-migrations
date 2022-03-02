@@ -24,10 +24,12 @@
 			<artifactId>neo4j-migrations-quarkus</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<!-- tag::quarkus-neo4j-deployment-dependency[] -->
 		<dependency>
 			<groupId>io.quarkiverse.neo4j</groupId>
 			<artifactId>quarkus-neo4j-deployment</artifactId>
 		</dependency>
+		<!-- end::quarkus-neo4j-deployment-dependency[] -->
 		<dependency>
 			<groupId>io.quarkus</groupId>
 			<artifactId>quarkus-arc-deployment</artifactId>

@@ -30,17 +30,21 @@ import java.util.Optional;
  * @author Michael J. Simons
  * @since 1.2.2
  */
+// tag::MigrationsProperties[]
 @ConfigRoot(prefix = "org.neo4j", name = "migrations", phase = ConfigPhase.RUN_TIME)
 public class MigrationsProperties {
 
+	// end::MigrationsProperties[]
 	/**
 	 * An optional list of external locations that don't become part of the image. Those locations can be changed during
 	 * runtime in contrast to {@link MigrationsBuildTimeProperties#locationsToScan} but can only be used for locations
 	 * inside the filesystem.
 	 */
+	// tag::MigrationsProperties[]
 	@ConfigItem
-	public Optional<List<String>> externalLocations;
+	public Optional<List<String>> externalLocations; // <.>
 
+	// end::MigrationsProperties[]
 	/**
 	 * Set to {@literal false} to disable migrations at start. An instance of {@link ac.simons.neo4j.migrations.core.Migrations} will
 	 * still be provided to interested parties.
@@ -57,8 +61,10 @@ public class MigrationsProperties {
 	/**
 	 * The database that should be migrated (Neo4j EE 4.0+ only). Leave empty for using the default database.
 	 */
+	// tag::MigrationsProperties[]
 	@ConfigItem
 	public Optional<String> database;
+	// end::MigrationsProperties[]
 
 	/**
 	 * The database that should be used for storing informations about migrations (Neo4j EE 4.0+ only). Leave empty for using the default database.
@@ -96,4 +102,7 @@ public class MigrationsProperties {
 	 */
 	@ConfigItem(defaultValue = Defaults.AUTOCRLF_VALUE)
 	public boolean autocrlf;
+
+	// tag::MigrationsProperties[]
 }
+// end::MigrationsProperties[]
