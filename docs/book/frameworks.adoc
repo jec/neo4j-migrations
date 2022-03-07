@@ -11,10 +11,9 @@ as those are the ones Neo4j-Migrations offers direct support for.
 == General considerations
 
 All the big frameworks come with a lot of dependencies already. If your library is written in such a way that it uses a ton
-of dependencies as well, you or your users end up in dependency issues pretty quickly. I honestly do think that the JDK offers
+of dependencies as well, you or your users most likely end up in dependency issues pretty quickly. I honestly do think that the JDK offers
 so many great APIs, being it for all the datastructures you need, sorting algorithms, String and general I/O operations and even
-upto HTTP clients (just checkout out `java.net.http.HttpClient` for that matter), that there is often any good reason to
-add a heavyweight dependency to your project at all.
+upto HTTP clients (just checkout out `java.net.http.HttpClient` for that matter), that there is often no good reason at all to add a heavyweight dependency to your project.
 
 Things I have in mind here are `commons-lang`, `guava` and the like: First, look at what the JDK offers for a task at hand
 or what is needed to create something decent yourself before you get yourself a couple of megabytes of dependencies.
