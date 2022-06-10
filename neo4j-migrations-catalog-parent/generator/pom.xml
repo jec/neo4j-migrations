@@ -16,23 +16,23 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
 		<groupId>eu.michael-simons.neo4j</groupId>
-		<artifactId>neo4j-migrations-parent</artifactId>
-		<version>1.7.1-SNAPSHOT</version>
+		<artifactId>neo4j-migrations-catalog-parent</artifactId>
+		<version>1.7.2-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>neo4j-migrations-catalog-generator-parent</artifactId>
-	<packaging>pom</packaging>
+	<artifactId>neo4j-migrations-catalog-generator</artifactId>
+	<packaging>jar</packaging>
 
-	<name>Neo4j Migrations (Catalog Generator Parent)</name>
-	<description>Automatic generation of catalogs based on Java annotations on entities.</description>
-
-	<modules>
-		<module>generator</module>
-	</modules>
+	<name>Neo4j Migrations (Catalog Generator)</name>
+	<description>Annotation processor</description>
+	<properties>
+		<java-module-name>ac.simons.neo4j.migrations.catalog.generator</java-module-name>
+	</properties>
 
 </project>

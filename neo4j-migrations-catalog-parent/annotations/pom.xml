@@ -22,17 +22,17 @@
 
 	<parent>
 		<groupId>eu.michael-simons.neo4j</groupId>
-		<artifactId>neo4j-migrations-catalog-generator-parent</artifactId>
-		<version>1.7.1-SNAPSHOT</version>
+		<artifactId>neo4j-migrations-catalog-parent</artifactId>
+		<version>1.7.2-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>neo4j-migrations-catalog-generator</artifactId>
+	<artifactId>neo4j-migrations-catalog-annotations</artifactId>
 	<packaging>jar</packaging>
 
-	<name>Neo4j Migrations (Catalog Generator)</name>
+	<name>Neo4j Migrations (Catalog Annotations)</name>
 	<description>Annotation processor</description>
 	<properties>
-		<java-module-name>ac.simons.neo4j.migrations.catalog.generator</java-module-name>
+		<java-module-name>ac.simons.neo4j.migrations.catalog.annotations</java-module-name>
 	</properties>
 
 </project>
