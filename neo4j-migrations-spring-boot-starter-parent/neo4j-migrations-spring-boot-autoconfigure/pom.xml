@@ -27,7 +27,7 @@
 
 	<artifactId>neo4j-migrations-spring-boot-autoconfigure</artifactId>
 
-	<name>Neo4j Migrations (Spring Boot Starter Autoconfiguration)</name>
+	<name>Neo4j Migrations (Spring Boot Autoconfiguration)</name>
 	<description>Autoconfiguration for Spring Boot.</description>
 
 	<properties>

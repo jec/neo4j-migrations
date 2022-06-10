@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ac.simons.neo4j.migrations.catalog.annotations;
+package ac.simons.neo4j.migrations.catalog.generator;
 
-/**
- * @author Michael J. Simons
- * @soundtrack Metallica - Load
- * @since TBA
- */
-public @interface Constraint {
+final class FullyQualifiedNames {
+
+	static final String OGM_NODE_ENTITY = "org.neo4j.ogm.annotation.NodeEntity";
+	static final String OGM_INDEX = "org.neo4j.ogm.annotation.Index";
+
+	private FullyQualifiedNames() {
+	}
 }

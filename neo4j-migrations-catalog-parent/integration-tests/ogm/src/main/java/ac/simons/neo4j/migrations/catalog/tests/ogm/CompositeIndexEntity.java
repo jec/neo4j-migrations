@@ -13,12 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ac.simons.neo4j.migrations.catalog.annotations;
+package ac.simons.neo4j.migrations.catalog.tests.ogm;
+
+import org.neo4j.ogm.annotation.CompositeIndex;
+import org.neo4j.ogm.annotation.NodeEntity;
 
 /**
+ * Verbatim copy from Neo4j-OGM.
+ *
+ * @author Frantisek Hartman
  * @author Michael J. Simons
- * @soundtrack Metallica - Load
- * @since TBA
  */
-public @interface Constraint {
+@NodeEntity(label = "EntityWithCompositeIndex")
+@CompositeIndex({ "name", "age" })
+public class CompositeIndexEntity {
+
+	Long id;
+
+	String name;
+
+	int age;
 }

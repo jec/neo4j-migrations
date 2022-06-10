@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ac.simons.neo4j.migrations.catalog.annotations;
+package ac.simons.neo4j.migrations.catalog.generator;
 
 /**
  * @author Michael J. Simons
- * @soundtrack Metallica - Load
- * @since TBA
+ * @soundtrack Pink Floyd - Pulse
  */
-public @interface Constraint {
+class CatalogProcessorTest {
+
+
 }

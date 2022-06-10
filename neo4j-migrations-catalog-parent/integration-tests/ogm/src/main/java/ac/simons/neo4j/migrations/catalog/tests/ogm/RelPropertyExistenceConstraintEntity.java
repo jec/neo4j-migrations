@@ -13,12 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ac.simons.neo4j.migrations.catalog.annotations;
+package ac.simons.neo4j.migrations.catalog.tests.ogm;
+
+import org.neo4j.ogm.annotation.EndNode;
+import org.neo4j.ogm.annotation.RelationshipEntity;
+import org.neo4j.ogm.annotation.Required;
+import org.neo4j.ogm.annotation.StartNode;
 
 /**
+ * Verbatim copy from Neo4j-OGM.
+ *
+ * @author Frantisek Hartman
  * @author Michael J. Simons
- * @soundtrack Metallica - Load
- * @since TBA
  */
-public @interface Constraint {
+@RelationshipEntity(type = "REL")
+public class RelPropertyExistenceConstraintEntity {
+
+	Long id;
+
+	@StartNode
+	Entity start;
+
+	@EndNode
+	Entity end;
+
+	@Required
+	String description;
 }

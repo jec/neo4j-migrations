@@ -28,7 +28,7 @@
 	<artifactId>neo4j-migrations-spring-boot-starter-parent</artifactId>
 	<packaging>pom</packaging>
 
-	<name>Neo4j Migrations (Spring Boot Starter Parent)</name>
+	<name>Neo4j Migrations (Spring Boot Parent)</name>
 	<description>Integration with Spring Boot.</description>
 
 	<modules>

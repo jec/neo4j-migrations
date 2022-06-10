@@ -27,7 +27,7 @@
 
 	<artifactId>neo4j-migrations-spring-boot-starter</artifactId>
 
-	<name>Neo4j Migrations (Spring Boot Starter)</name>
+	<name>Neo4j Migrations (Spring Boot)</name>
 	<description>Spring Boot Starter for Neo4j Migrations.</description>
 
 	<properties>

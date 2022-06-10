@@ -13,12 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ac.simons.neo4j.migrations.catalog.annotations;
+package ac.simons.neo4j.migrations.catalog.tests.ogm;
+
+import org.neo4j.ogm.annotation.Id;
+import org.neo4j.ogm.annotation.RelationshipEntity;
 
 /**
+ * Verbatim copy from Neo4j-OGM.
+ *
+ * @author Gerrit Meier
  * @author Michael J. Simons
- * @soundtrack Metallica - Load
- * @since TBA
  */
-public @interface Constraint {
+@RelationshipEntity(type = "SAME_TYPE")
+public class RelationshipEntityWithSameType2 {
+
+	@Id
+	private Long id;
 }
