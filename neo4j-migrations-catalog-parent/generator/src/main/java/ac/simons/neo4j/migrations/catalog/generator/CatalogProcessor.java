@@ -71,7 +71,7 @@ public final class CatalogProcessor extends AbstractProcessor {
 
 				 */
 				FileObject fileObject = processingEnv.getFiler()
-					.createResource(StandardLocation.SOURCE_OUTPUT, "", getOutputDir() + "i_was_there.txt");
+					.createResource(StandardLocation.CLASS_OUTPUT, "", getOutputDir() + "i_was_there.txt");
 				try (BufferedWriter out = new BufferedWriter(new OutputStreamWriter(fileObject.openOutputStream()))) {
 					out.write("Hello");
 				}
