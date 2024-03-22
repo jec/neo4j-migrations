@@ -1,1 +1,1 @@
-moduleSearchIndex = [];updateSearchResults();
+moduleSearchIndex = [{"l":"ac.simons.neo4j.migrations.cli"}];updateSearchResults();
